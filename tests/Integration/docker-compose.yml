@@ -10,7 +10,8 @@ services:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -ukimai -pkimai --silent"]
       interval: 5s
       timeout: 5s
-      retries: 20
+      start_period: 90s
+      retries: 60
   kimai:
     build:
       context: ../..
@@ -31,7 +32,8 @@ services:
       test: ["CMD-SHELL", "curl -fsS -H 'Host: kimai.test' http://127.0.0.1:8001/ >/dev/null"]
       interval: 5s
       timeout: 5s
-      retries: 20
+      start_period: 90s
+      retries: 60
   verifier:
     image: kimai/kimai2@sha256:7ccc9597309b9f76ded0a3cf168b5e137167fec6c8aa6a588194dcf6ce26ec2f
     depends_on:
