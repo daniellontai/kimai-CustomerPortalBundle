@@ -1,3 +1,7 @@
+## Unreleased
+
+- Add configurable editable and frozen customer-portal date ranges
+
 ## Version 4.6.0
 
 Compatibility: requires minimum Kimai 2.25.0
