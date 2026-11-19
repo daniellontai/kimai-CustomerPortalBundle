@@ -215,11 +215,17 @@ class SharedProjectTimesheet
     }
 
     public function getStartDate(): ?\DateTimeImmutable { return $this->startDate; }
+
     public function setStartDate(?\DateTimeImmutable $startDate): void { $this->startDate = $startDate; }
+
     public function getEndDate(): ?\DateTimeImmutable { return $this->endDate; }
+
     public function setEndDate(?\DateTimeImmutable $endDate): void { $this->endDate = $endDate; }
+
     public function isDateRangeFrozen(): bool { return $this->dateRangeFrozen; }
+
     public function setDateRangeFrozen(bool $dateRangeFrozen): void { $this->dateRangeFrozen = $dateRangeFrozen; }
+
     public function hasDateRangeConfiguration(): bool { return $this->startDate !== null || $this->endDate !== null; }
 
     #[Assert\Callback]

@@ -17,8 +17,8 @@ use DateInterval;
 use DateTime;
 use KimaiPlugin\CustomerPortalBundle\Entity\SharedProjectTimesheet;
 use KimaiPlugin\CustomerPortalBundle\Model\ChartStat;
-use KimaiPlugin\CustomerPortalBundle\Model\RecordMergeMode;
 use KimaiPlugin\CustomerPortalBundle\Model\PortalDateRange;
+use KimaiPlugin\CustomerPortalBundle\Model\RecordMergeMode;
 use KimaiPlugin\CustomerPortalBundle\Model\TimeRecord;
 use KimaiPlugin\CustomerPortalBundle\Repository\SharedProjectTimesheetRepository;
 use Symfony\Component\HttpFoundation\Request;
@@ -249,9 +249,10 @@ class ViewService
         }
         $stats = [];
         foreach ($builder->getQuery()->getArrayResult() as $row) {
-            $key = $monthly ? sprintf('%04d-%02d', $row['year'], $row['month']) : sprintf('%04d-%02d-%02d', $row['year'], $row['month'], $row['day']);
+            $key = $monthly ? \sprintf('%04d-%02d', $row['year'], $row['month']) : \sprintf('%04d-%02d-%02d', $row['year'], $row['month'], $row['day']);
             $stats[$key] = new ChartStat($row);
         }
+
         return $stats;
     }
 
@@ -271,6 +272,7 @@ class ViewService
             $current = $weekly[$week] ?? ['duration' => 0, 'rate' => 0.0];
             $weekly[$week] = ['duration' => $current['duration'] + $stat->getDuration(), 'rate' => $current['rate'] + $stat->getRate()];
         }
+
         return array_map(static fn (array $row): ChartStat => new ChartStat($row), $weekly);
     }
 
