@@ -1,6 +1,8 @@
 services:
   database:
     image: mysql:8.0
+    tmpfs:
+      - /var/lib/mysql
     environment:
       MYSQL_DATABASE: kimai
       MYSQL_USER: kimai
