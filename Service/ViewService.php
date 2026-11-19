@@ -83,7 +83,7 @@ class ViewService
             $end = DateTime::createFromImmutable($year->getEndExclusive()->modify('-1 second'));
             $limitProject = $month instanceof Project ? $month : $limitProject;
         } else {
-            $month = max(min((int) $month, 12), 1);
+            $month = max(min(\is_int($month) ? $month : 1, 12), 1);
             $begin = new DateTime($year . '-' . $month . '-01 00:00:00');
             $end = clone $begin;
             $end->add(new DateInterval('P1M'));

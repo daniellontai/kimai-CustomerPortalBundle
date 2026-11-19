@@ -17,8 +17,8 @@ final class PortalDateRangeResolver
         }
         $from = $portal->isDateRangeFrozen() ? null : $request->query->get('from');
         $to = $portal->isDateRangeFrozen() ? null : $request->query->get('to');
-        $start = $from ? new \DateTimeImmutable((string) $from, $zone) : ($portal->getStartDate() ?? new \DateTimeImmutable('1970-01-01', $zone));
-        $end = $to ? new \DateTimeImmutable((string) $to, $zone) : ($portal->getEndDate() ?? new \DateTimeImmutable('today', $zone));
+        $start = $from !== null && $from !== '' ? new \DateTimeImmutable((string) $from, $zone) : ($portal->getStartDate() ?? new \DateTimeImmutable('1970-01-01', $zone));
+        $end = $to !== null && $to !== '' ? new \DateTimeImmutable((string) $to, $zone) : ($portal->getEndDate() ?? new \DateTimeImmutable('today', $zone));
         if ($start > $end) { throw new \InvalidArgumentException('Start date must not be after end date'); }
         return new PortalDateRange($start->setTime(0, 0), $end->setTime(0, 0)->modify('+1 day'));
     }
