@@ -1,4 +1,5 @@
 services:
+    KimaiPlugin\CustomerPortalBundle\Service\PortalDateRangeResolver: ~
     _defaults:
         autowire: true
         autoconfigure: true
