@@ -23,12 +23,14 @@ services:
     environment:
       APP_ENV: prod
       APP_SECRET: integration-test-secret-not-for-production
-      TRUSTED_HOSTS: '^(kimai\\.test|localhost|127\\.0\\.0\\.1)$'
+      TRUSTED_HOSTS: '^(kimai\.test|localhost|127\.0\.0\.1)$'
       ADMINMAIL: admin@kimai.test
       ADMINPASS: integration-test-password
       DATABASE_URL: mysql://kimai:kimai@database/kimai?charset=utf8mb4&serverVersion=8.0.36
     depends_on:
       - database
+    volumes:
+      - kimai-cache:/opt/kimai/var/cache
     ports:
       - "127.0.0.1:8001:8001"
     healthcheck:
@@ -58,6 +60,11 @@ services:
     environment:
       APP_ENV: prod
       APP_SECRET: integration-test-secret-not-for-production
-      TRUSTED_HOSTS: '^(kimai\\.test|localhost|127\\.0\\.0\\.1)$'
+      TRUSTED_HOSTS: '^(kimai\.test|localhost|127\.0\.0\.1)$'
       DATABASE_URL: mysql://kimai:kimai@database/kimai?charset=utf8mb4&serverVersion=8.0.36
-    entrypoint: ["sh", "-c", "/opt/kimai/bin/console kimai:bundle:customer-portal:install && php /fixtures/seed.php"]
+    volumes:
+      - kimai-cache:/opt/kimai/var/cache
+    entrypoint: ["sh", "-c", "php -d memory_limit=512M /opt/kimai/bin/console kimai:bundle:customer-portal:install && php -d memory_limit=512M /opt/kimai/bin/console kimai:reload && php -d memory_limit=512M /fixtures/seed.php"]
+
+volumes:
+  kimai-cache:
