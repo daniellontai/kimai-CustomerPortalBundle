@@ -26,8 +26,7 @@ services:
       ADMINPASS: integration-test-password
       DATABASE_URL: mysql://kimai:kimai@database/kimai?charset=utf8mb4&serverVersion=8.0.36
     depends_on:
-      database:
-        condition: service_healthy
+      - database
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS -H 'Host: kimai.test' http://127.0.0.1:8001/ >/dev/null"]
       interval: 5s
