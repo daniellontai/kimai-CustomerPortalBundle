@@ -225,6 +225,34 @@ class ViewService
         return $stats;
     }
 
+    /** @return array<string, ChartStat> */
+    public function getRangeStats(SharedProjectTimesheet $sharedProject, PortalDateRange $range, ?Project $limitProject = null, bool $monthly = true): array
+    {
+        $select = $monthly ? ['YEAR(t.date) AS year', 'MONTH(t.date) AS month'] : ['YEAR(t.date) AS year', 'MONTH(t.date) AS month', 'DAY(t.date) AS day'];
+        $select[] = 'SUM(t.duration) AS duration';
+        $select[] = 'SUM(t.rate) AS rate';
+        $builder = $this->timesheetRepository->createQueryBuilder('t')->select($select)
+            ->where('t.begin >= :start')->andWhere('t.begin < :end')
+            ->setParameter('start', $range->getStart())->setParameter('end', $range->getEndExclusive())
+            ->groupBy('year')->addGroupBy('month');
+        if (!$monthly) { $builder->addGroupBy('day'); }
+        if ($limitProject !== null) {
+            $builder->andWhere('t.project = :project')->setParameter('project', $limitProject);
+        } elseif ($sharedProject->getProject() !== null) {
+            $builder->andWhere('t.project = :project')->setParameter('project', $sharedProject->getProject());
+        } else {
+            $projects = $this->sharedTimesheetRepository->getProjects($sharedProject);
+            if ($projects === []) { return []; }
+            $builder->andWhere('t.project IN (:projects)')->setParameter('projects', $projects);
+        }
+        $stats = [];
+        foreach ($builder->getQuery()->getArrayResult() as $row) {
+            $key = $monthly ? sprintf('%04d-%02d', $row['year'], $row['month']) : sprintf('%04d-%02d-%02d', $row['year'], $row['month'], $row['day']);
+            $stats[$key] = new ChartStat($row);
+        }
+        return $stats;
+    }
+
     /**
      * Delivers stats for the given month (e.g. duration per day).
      *

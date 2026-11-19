@@ -123,9 +123,9 @@ class ViewController extends AbstractController
         $annualChartVisible = $sharedPortal->isAnnualChartVisible();
         $monthlyChartVisible = $sharedPortal->isMonthlyChartVisible();
 
-        $statsPerMonth = $annualChartVisible ? $this->viewService->getAnnualStats($sharedPortal, $year) : null;
+        $statsPerMonth = $annualChartVisible ? ($range->isLegacyMonth() ? $this->viewService->getAnnualStats($sharedPortal, $year) : $this->viewService->getRangeStats($sharedPortal, $range)) : null;
         $statsPerDay = ($monthlyChartVisible && $detailsMode === 'chart')
-            ? $this->viewService->getMonthlyStats($sharedPortal, $year, $month) : null;
+            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedPortal, $year, $month) : $this->viewService->getRangeStats($sharedPortal, $range, null, false)) : null;
 
         // we cannot call $this->getDateTimeFactory() as it throws a AccessDeniedException for anonymous users
         $date = new \DateTimeImmutable('now', new \DateTimeZone($timezone));
@@ -175,9 +175,9 @@ class ViewController extends AbstractController
         // Prepare stats for charts.
         $annualChartVisible = $sharedProject->isAnnualChartVisible();
         $monthlyChartVisible = $sharedProject->isMonthlyChartVisible();
-        $statsPerMonth = $annualChartVisible ? $this->viewService->getAnnualStats($sharedProject, $year, $project) : null;
+        $statsPerMonth = $annualChartVisible ? ($range->isLegacyMonth() ? $this->viewService->getAnnualStats($sharedProject, $year, $project) : $this->viewService->getRangeStats($sharedProject, $range, $project)) : null;
         $statsPerDay = ($monthlyChartVisible && $detailsMode === 'chart')
-            ? $this->viewService->getMonthlyStats($sharedProject, $year, $month, $project) : null;
+            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedProject, $year, $month, $project) : $this->viewService->getRangeStats($sharedProject, $range, $project, false)) : null;
 
         // we cannot call $this->getDateTimeFactory() as it throws a AccessDeniedException for anonymous users
         $date = new \DateTimeImmutable('now', new \DateTimeZone($timezone));

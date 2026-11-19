@@ -11,22 +11,16 @@
         type: 'bar',
         data: {
             labels: [
-                {% for name in month_names() %}
-                '{{ name }}',
-                {% endfor %}
+                {% if range.legacyMonth %}{% for name in month_names() %}'{{ name }}',{% endfor %}{% else %}{% for label, stat in statsPerMonth %}'{{ label }}',{% endfor %}{% endif %}
             ],
             datasets: [{
                 label: '{{ 'duration' | trans }}',
                 backgroundColor: '{{ backgroundColor }}',
                 data: [
-                    {% for i in 1..12 %}
-                    {{ (statsPerMonth[i].duration / 3600) | number_format(2, '.', '') }},
-                    {% endfor %}
+                    {% if range.legacyMonth %}{% for i in 1..12 %}{{ (statsPerMonth[i].duration / 3600) | number_format(2, '.', '') }},{% endfor %}{% else %}{% for stat in statsPerMonth %}{{ (stat.duration / 3600) | number_format(2, '.', '') }},{% endfor %}{% endif %}
                 ],
                 realData: [
-                    {% for i in 1..12 %}
-                    '{{ statsPerMonth[i].duration | duration }}',
-                    {% endfor %}
+                    {% if range.legacyMonth %}{% for i in 1..12 %}'{{ statsPerMonth[i].duration | duration }}',{% endfor %}{% else %}{% for stat in statsPerMonth %}'{{ stat.duration | duration }}',{% endfor %}{% endif %}
                 ]
             }]
         },
