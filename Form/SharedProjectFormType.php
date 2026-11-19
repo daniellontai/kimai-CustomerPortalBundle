@@ -57,8 +57,8 @@ class SharedProjectFormType extends AbstractType
                 'mapped' => false,
                 'help' => 'shared_project_timesheets.manage.form.password_hint',
             ])
-            ->add('startDate', DateType::class, ['label' => 'shared_project_timesheets.manage.form.start_date', 'required' => false, 'widget' => 'single_text'])
-            ->add('endDate', DateType::class, ['label' => 'shared_project_timesheets.manage.form.end_date', 'required' => false, 'widget' => 'single_text'])
+            ->add('startDate', DateType::class, ['label' => 'shared_project_timesheets.manage.form.start_date', 'required' => false, 'widget' => 'single_text', 'input' => 'datetime_immutable'])
+            ->add('endDate', DateType::class, ['label' => 'shared_project_timesheets.manage.form.end_date', 'required' => false, 'widget' => 'single_text', 'input' => 'datetime_immutable'])
             ->add('dateRangeFrozen', YesNoType::class, ['label' => 'shared_project_timesheets.manage.form.freeze_date_range', 'required' => false])
             ->add(
                 $builder

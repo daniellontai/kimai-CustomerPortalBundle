@@ -236,6 +236,8 @@ class ViewService
             ->setParameter('start', $range->getStart())->setParameter('end', $range->getEndExclusive())
             ->groupBy('year')->addGroupBy('month');
         if (!$monthly) { $builder->addGroupBy('day'); }
+        $builder->orderBy('year', 'ASC')->addOrderBy('month', 'ASC');
+        if (!$monthly) { $builder->addOrderBy('day', 'ASC'); }
         if ($limitProject !== null) {
             $builder->andWhere('t.project = :project')->setParameter('project', $limitProject);
         } elseif ($sharedProject->getProject() !== null) {
