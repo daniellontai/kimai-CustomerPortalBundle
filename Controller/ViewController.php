@@ -125,7 +125,7 @@ class ViewController extends AbstractController
 
         $statsPerMonth = $annualChartVisible ? ($range->isLegacyMonth() ? $this->viewService->getAnnualStats($sharedPortal, $year) : $this->viewService->getRangeStats($sharedPortal, $range)) : null;
         $statsPerDay = ($monthlyChartVisible && $detailsMode === 'chart')
-            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedPortal, $year, $month) : $this->viewService->getRangeStats($sharedPortal, $range, null, false)) : null;
+            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedPortal, $year, $month) : $this->viewService->getRangeDetailStats($sharedPortal, $range)) : null;
 
         // we cannot call $this->getDateTimeFactory() as it throws a AccessDeniedException for anonymous users
         $date = new \DateTimeImmutable('now', new \DateTimeZone($timezone));
@@ -177,7 +177,7 @@ class ViewController extends AbstractController
         $monthlyChartVisible = $sharedProject->isMonthlyChartVisible();
         $statsPerMonth = $annualChartVisible ? ($range->isLegacyMonth() ? $this->viewService->getAnnualStats($sharedProject, $year, $project) : $this->viewService->getRangeStats($sharedProject, $range, $project)) : null;
         $statsPerDay = ($monthlyChartVisible && $detailsMode === 'chart')
-            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedProject, $year, $month, $project) : $this->viewService->getRangeStats($sharedProject, $range, $project, false)) : null;
+            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedProject, $year, $month, $project) : $this->viewService->getRangeDetailStats($sharedProject, $range, $project)) : null;
 
         // we cannot call $this->getDateTimeFactory() as it throws a AccessDeniedException for anonymous users
         $date = new \DateTimeImmutable('now', new \DateTimeZone($timezone));

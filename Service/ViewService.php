@@ -255,6 +255,25 @@ class ViewService
         return $stats;
     }
 
+    /** @return array<string, ChartStat> */
+    public function getRangeDetailStats(SharedProjectTimesheet $sharedProject, PortalDateRange $range, ?Project $limitProject = null): array
+    {
+        $days = $range->getStartDate()->diff($range->getEndDate())->days + 1;
+        if ($days <= 62) {
+            return $this->getRangeStats($sharedProject, $range, $limitProject, false);
+        }
+        if ($days > 366) {
+            return $this->getRangeStats($sharedProject, $range, $limitProject);
+        }
+        $weekly = [];
+        foreach ($this->getRangeStats($sharedProject, $range, $limitProject, false) as $day => $stat) {
+            $week = (new \DateTimeImmutable($day))->format('o-\\WW');
+            $current = $weekly[$week] ?? ['duration' => 0, 'rate' => 0.0];
+            $weekly[$week] = ['duration' => $current['duration'] + $stat->getDuration(), 'rate' => $current['rate'] + $stat->getRate()];
+        }
+        return array_map(static fn (array $row): ChartStat => new ChartStat($row), $weekly);
+    }
+
     /**
      * Delivers stats for the given month (e.g. duration per day).
      *
