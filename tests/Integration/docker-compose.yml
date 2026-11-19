@@ -21,12 +21,14 @@ services:
     environment:
       APP_ENV: prod
       APP_SECRET: integration-test-secret-not-for-production
-      TRUSTED_HOSTS: '^kimai\\.test$'
+      TRUSTED_HOSTS: '^(kimai\\.test|localhost|127\\.0\\.0\\.1)$'
       ADMINMAIL: admin@kimai.test
       ADMINPASS: integration-test-password
       DATABASE_URL: mysql://kimai:kimai@database/kimai?charset=utf8mb4&serverVersion=8.0.36
     depends_on:
       - database
+    ports:
+      - "127.0.0.1:8001:8001"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS -H 'Host: kimai.test' http://127.0.0.1:8001/ >/dev/null"]
       interval: 5s
@@ -54,6 +56,6 @@ services:
     environment:
       APP_ENV: prod
       APP_SECRET: integration-test-secret-not-for-production
-      TRUSTED_HOSTS: '^kimai\\.test$'
+      TRUSTED_HOSTS: '^(kimai\\.test|localhost|127\\.0\\.0\\.1)$'
       DATABASE_URL: mysql://kimai:kimai@database/kimai?charset=utf8mb4&serverVersion=8.0.36
     entrypoint: ["sh", "-c", "/opt/kimai/bin/console kimai:bundle:customer-portal:install && php /fixtures/seed.php"]
