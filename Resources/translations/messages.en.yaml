@@ -14,6 +14,11 @@ shared_project_timesheets:
             statistics_options: Statistics options
             budget_stats_visible: Budget statistics visible
             time_budget_stats_visible: Time budget statistics visible
+            start_date: Start date
+            end_date: End date
+            freeze_date_range: Freeze date range
+            date_range_invalid: Start date must not be after end date
+            date_range_required: Frozen date ranges require start and end dates
         table:
             record_merge_mode: Merge records
             entry_user_visible: Entry user visible

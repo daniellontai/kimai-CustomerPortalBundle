@@ -17,6 +17,7 @@ use KimaiPlugin\CustomerPortalBundle\Model\RecordMergeMode;
 use KimaiPlugin\CustomerPortalBundle\Service\ManageService;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -56,6 +57,9 @@ class SharedProjectFormType extends AbstractType
                 'mapped' => false,
                 'help' => 'shared_project_timesheets.manage.form.password_hint',
             ])
+            ->add('startDate', DateType::class, ['label' => 'shared_project_timesheets.manage.form.start_date', 'required' => false, 'widget' => 'single_text'])
+            ->add('endDate', DateType::class, ['label' => 'shared_project_timesheets.manage.form.end_date', 'required' => false, 'widget' => 'single_text'])
+            ->add('dateRangeFrozen', YesNoType::class, ['label' => 'shared_project_timesheets.manage.form.freeze_date_range', 'required' => false])
             ->add(
                 $builder
                     ->create('tableOptions', FormType::class, [

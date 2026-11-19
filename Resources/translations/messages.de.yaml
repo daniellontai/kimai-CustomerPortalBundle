@@ -14,6 +14,11 @@ shared_project_timesheets:
             statistics_options: Projektstatistiken - Optionen
             budget_stats_visible: Budgetstatistiken sichtbar
             time_budget_stats_visible: Zeitbudgetstatistiken sichtbar
+            start_date: Startdatum
+            end_date: Enddatum
+            freeze_date_range: Datumsbereich sperren
+            date_range_invalid: Das Startdatum darf nicht nach dem Enddatum liegen
+            date_range_required: Gesperrte Datumsbereiche benötigen Start- und Enddatum
         table:
             record_merge_mode: Zeiten zusammenführen
             entry_user_visible: Benutzer sichtbar

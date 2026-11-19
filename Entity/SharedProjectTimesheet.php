@@ -16,6 +16,7 @@ use KimaiPlugin\CustomerPortalBundle\Model\RecordMergeMode;
 use KimaiPlugin\CustomerPortalBundle\Repository\SharedProjectTimesheetRepository;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Table(name: 'kimai2_customer_portals')]
 #[ORM\Index(columns: ['share_key'])]
@@ -69,6 +70,15 @@ class SharedProjectTimesheet
 
     #[ORM\Column(name: 'time_budget_stats_visible', type: 'boolean', nullable: false, options: ['default' => false])]
     private bool $timeBudgetStatsVisible = false;
+
+    #[ORM\Column(name: 'start_date', type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $startDate = null;
+
+    #[ORM\Column(name: 'end_date', type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $endDate = null;
+
+    #[ORM\Column(name: 'freeze_date_range', type: 'boolean', nullable: false, options: ['default' => false])]
+    private bool $dateRangeFrozen = false;
 
     public function getId(): ?int
     {
@@ -202,5 +212,24 @@ class SharedProjectTimesheet
         }
 
         return static::TYPE_PROJECT;
+    }
+
+    public function getStartDate(): ?\DateTimeImmutable { return $this->startDate; }
+    public function setStartDate(?\DateTimeImmutable $startDate): void { $this->startDate = $startDate; }
+    public function getEndDate(): ?\DateTimeImmutable { return $this->endDate; }
+    public function setEndDate(?\DateTimeImmutable $endDate): void { $this->endDate = $endDate; }
+    public function isDateRangeFrozen(): bool { return $this->dateRangeFrozen; }
+    public function setDateRangeFrozen(bool $dateRangeFrozen): void { $this->dateRangeFrozen = $dateRangeFrozen; }
+    public function hasDateRangeConfiguration(): bool { return $this->startDate !== null || $this->endDate !== null; }
+
+    #[Assert\Callback]
+    public function validateDateRange(ExecutionContextInterface $context): void
+    {
+        if ($this->startDate !== null && $this->endDate !== null && $this->startDate > $this->endDate) {
+            $context->buildViolation('shared_project_timesheets.manage.form.date_range_invalid')->atPath('endDate')->addViolation();
+        }
+        if ($this->dateRangeFrozen && ($this->startDate === null || $this->endDate === null)) {
+            $context->buildViolation('shared_project_timesheets.manage.form.date_range_required')->atPath('dateRangeFrozen')->addViolation();
+        }
     }
 }
