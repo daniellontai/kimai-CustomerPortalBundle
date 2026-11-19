@@ -6,6 +6,7 @@ use KimaiPlugin\CustomerPortalBundle\Entity\SharedProjectTimesheet;
 use KimaiPlugin\CustomerPortalBundle\Service\PortalDateRangeResolver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class PortalDateRangeResolverTest extends TestCase
 {
@@ -32,5 +33,13 @@ class PortalDateRangeResolverTest extends TestCase
 
         self::assertSame('2026-09-16', $range->getStartDate()->format('Y-m-d'));
         self::assertSame('2026-10-09', $range->getEndDate()->format('Y-m-d'));
+    }
+
+    public function testRejectsMalformedSubmittedDate(): void
+    {
+        $this->expectException(BadRequestHttpException::class);
+        $portal = new SharedProjectTimesheet();
+        $portal->setStartDate(new \DateTimeImmutable('2026-08-12'));
+        (new PortalDateRangeResolver())->resolve($portal, new Request(['from' => 'not-a-date']), 'Europe/Budapest');
     }
 }

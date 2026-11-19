@@ -3,6 +3,7 @@ namespace KimaiPlugin\CustomerPortalBundle\Service;
 use KimaiPlugin\CustomerPortalBundle\Entity\SharedProjectTimesheet;
 use KimaiPlugin\CustomerPortalBundle\Model\PortalDateRange;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 final class PortalDateRangeResolver
 {
@@ -17,9 +18,19 @@ final class PortalDateRangeResolver
         }
         $from = $portal->isDateRangeFrozen() ? null : $request->query->get('from');
         $to = $portal->isDateRangeFrozen() ? null : $request->query->get('to');
-        $start = $from !== null && $from !== '' ? new \DateTimeImmutable((string) $from, $zone) : ($portal->getStartDate() ?? new \DateTimeImmutable('1970-01-01', $zone));
-        $end = $to !== null && $to !== '' ? new \DateTimeImmutable((string) $to, $zone) : ($portal->getEndDate() ?? new \DateTimeImmutable('today', $zone));
-        if ($start > $end) { throw new \InvalidArgumentException('Start date must not be after end date'); }
+        $start = $from !== null && $from !== '' ? $this->parseDate((string) $from, $zone) : ($portal->getStartDate() ?? new \DateTimeImmutable('1970-01-01', $zone));
+        $end = $to !== null && $to !== '' ? $this->parseDate((string) $to, $zone) : ($portal->getEndDate() ?? new \DateTimeImmutable('today', $zone));
+        if ($start > $end) { throw new BadRequestHttpException('Start date must not be after end date'); }
         return new PortalDateRange($start->setTime(0, 0), $end->setTime(0, 0)->modify('+1 day'));
+    }
+
+    private function parseDate(string $value, \DateTimeZone $timezone): \DateTimeImmutable
+    {
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value, $timezone);
+        $errors = \DateTimeImmutable::getLastErrors();
+        if ($date === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            throw new BadRequestHttpException('Invalid date format, expected Y-m-d');
+        }
+        return $date;
     }
 }
