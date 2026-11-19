@@ -18,8 +18,8 @@ final class PortalDateRangeResolver
         }
         $from = $portal->isDateRangeFrozen() ? null : $request->query->get('from');
         $to = $portal->isDateRangeFrozen() ? null : $request->query->get('to');
-        $start = $from !== null && $from !== '' ? $this->parseDate((string) $from, $zone) : ($portal->getStartDate() ?? new \DateTimeImmutable('1970-01-01', $zone));
-        $end = $to !== null && $to !== '' ? $this->parseDate((string) $to, $zone) : ($portal->getEndDate() ?? new \DateTimeImmutable('today', $zone));
+        $start = $from !== null && $from !== '' ? $this->parseDate((string) $from, $zone) : ($this->configuredDate($portal->getStartDate(), $zone) ?? new \DateTimeImmutable('1970-01-01', $zone));
+        $end = $to !== null && $to !== '' ? $this->parseDate((string) $to, $zone) : ($this->configuredDate($portal->getEndDate(), $zone) ?? new \DateTimeImmutable('today', $zone));
         if ($start > $end) { throw new BadRequestHttpException('Start date must not be after end date'); }
         return new PortalDateRange($start->setTime(0, 0), $end->setTime(0, 0)->modify('+1 day'));
     }
@@ -32,5 +32,10 @@ final class PortalDateRangeResolver
             throw new BadRequestHttpException('Invalid date format, expected Y-m-d');
         }
         return $date;
+    }
+
+    private function configuredDate(?\DateTimeImmutable $date, \DateTimeZone $timezone): ?\DateTimeImmutable
+    {
+        return $date === null ? null : new \DateTimeImmutable($date->format('Y-m-d'), $timezone);
     }
 }

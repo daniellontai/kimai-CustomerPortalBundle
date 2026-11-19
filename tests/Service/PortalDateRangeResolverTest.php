@@ -42,4 +42,13 @@ class PortalDateRangeResolverTest extends TestCase
         $portal->setStartDate(new \DateTimeImmutable('2026-08-12'));
         (new PortalDateRangeResolver())->resolve($portal, new Request(['from' => 'not-a-date']), 'Europe/Budapest');
     }
+
+    public function testUsesPortalTimezoneForPersistedDateBoundary(): void
+    {
+        $portal = new SharedProjectTimesheet();
+        $portal->setStartDate(new \DateTimeImmutable('2026-08-12 00:00:00', new \DateTimeZone('UTC')));
+        $range = (new PortalDateRangeResolver())->resolve($portal, new Request(), 'Europe/Budapest');
+        self::assertSame('Europe/Budapest', $range->getStart()->getTimezone()->getName());
+        self::assertSame('2026-08-12 00:00', $range->getStart()->format('Y-m-d H:i'));
+    }
 }
