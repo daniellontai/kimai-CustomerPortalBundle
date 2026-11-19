@@ -18,6 +18,7 @@ use DateTime;
 use KimaiPlugin\CustomerPortalBundle\Entity\SharedProjectTimesheet;
 use KimaiPlugin\CustomerPortalBundle\Model\ChartStat;
 use KimaiPlugin\CustomerPortalBundle\Model\RecordMergeMode;
+use KimaiPlugin\CustomerPortalBundle\Model\PortalDateRange;
 use KimaiPlugin\CustomerPortalBundle\Model\TimeRecord;
 use KimaiPlugin\CustomerPortalBundle\Repository\SharedProjectTimesheetRepository;
 use Symfony\Component\HttpFoundation\Request;
@@ -75,14 +76,19 @@ class ViewService
      *
      * @return TimeRecord[]
      */
-    public function getTimeRecords(SharedProjectTimesheet $sharedProject, int $year, int $month, ?Project $limitProject = null): array
+    public function getTimeRecords(SharedProjectTimesheet $sharedProject, int|PortalDateRange $year, int|Project|null $month = null, ?Project $limitProject = null): array
     {
-        $month = max(min($month, 12), 1);
-
-        $begin = new DateTime($year . '-' . $month . '-01 00:00:00');
-        $end = clone $begin;
-        $end->add(new DateInterval('P1M'));
-        $end->sub(new DateInterval('PT1S'));
+        if ($year instanceof PortalDateRange) {
+            $begin = DateTime::createFromImmutable($year->getStart());
+            $end = DateTime::createFromImmutable($year->getEndExclusive()->modify('-1 second'));
+            $limitProject = $month instanceof Project ? $month : $limitProject;
+        } else {
+            $month = max(min((int) $month, 12), 1);
+            $begin = new DateTime($year . '-' . $month . '-01 00:00:00');
+            $end = clone $begin;
+            $end->add(new DateInterval('P1M'));
+            $end->sub(new DateInterval('PT1S'));
+        }
 
         $query = new TimesheetQuery();
         $query->setBegin($begin);

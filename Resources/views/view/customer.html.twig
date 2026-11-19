@@ -26,13 +26,13 @@
 {% block page_classes %}page{% endblock %}
 
 {% block page_content %}
-{% set show_progress = (stats.hasBudget() and portal.isBudgetStatsVisible()) or (stats.hasTimeBudget() and portal.isTimeBudgetStatsVisible()) %}
+{% set show_progress = stats is not null and ((stats.hasBudget() and portal.isBudgetStatsVisible()) or (stats.hasTimeBudget() and portal.isTimeBudgetStatsVisible())) %}
 {% set show_month_stats = statsPerMonth is not null %}
 <div class="p-4">
 
     <h2 class="page-title mb-3">
 
-        <div class="btn-group pe-2">
+        {% if range.legacyMonth %}<div class="btn-group pe-2">
             <a class="btn btn-default{% if month <= 1 %} disabled{% endif %}"
                {% if month > 1 %}href="?year={{ year }}&month={{ month - 1 }}{% if detailsMode != 'table' %}&details={{ detailsMode }}{% endif %}"{% endif %}>
                 <i class="fa fa-caret-left"></i>
@@ -74,6 +74,7 @@
             </a>
         </div>
 
+        {% else %}<form method="get" class="d-flex gap-2"><input type="date" name="from" value="{{ range.startDate|date('Y-m-d') }}" {% if portal.dateRangeFrozen %}disabled{% endif %}><input type="date" name="to" value="{{ range.endDate|date('Y-m-d') }}" {% if portal.dateRangeFrozen %}disabled{% endif %}>{% if not portal.dateRangeFrozen %}<button class="btn btn-default">Apply</button>{% endif %}</form>{% endif %}
         <span class="ps-2">{{ customer.name }}</span>
     </h2>
 
