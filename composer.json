@@ -58,7 +58,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.0",
         "kimai/kimai": "dev-main",
-        "phpunit/phpunit": "^10.5",
+        "phpunit/phpunit": "^9.6",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-doctrine": "^2.0",
