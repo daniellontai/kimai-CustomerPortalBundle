@@ -22,7 +22,7 @@ class SharedProjectFormTypeTest extends TestCase
         $builder = $this->createMock(FormBuilderInterface::class);
         $builder->method('add')->willReturnCallback(function (...$arguments) use (&$fields, $builder) {
             if (\is_string($arguments[0])) {
-                $fields[$arguments[0]] = $arguments[1];
+                $fields[$arguments[0]] = $arguments;
             }
 
             return $builder;
@@ -31,7 +31,9 @@ class SharedProjectFormTypeTest extends TestCase
 
         (new SharedProjectFormType())->buildForm($builder, []);
 
-        self::assertSame(DatePickerType::class, $fields['startDate']);
-        self::assertSame(DatePickerType::class, $fields['endDate']);
+        self::assertSame(DatePickerType::class, $fields['startDate'][1]);
+        self::assertFalse($fields['startDate'][2]['html5'] ?? true);
+        self::assertSame(DatePickerType::class, $fields['endDate'][1]);
+        self::assertFalse($fields['endDate'][2]['html5'] ?? true);
     }
 }
