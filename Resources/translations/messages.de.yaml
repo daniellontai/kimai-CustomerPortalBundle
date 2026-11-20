@@ -3,6 +3,7 @@ shared_project_timesheets:
 
     manage:
         form:
+            label: Portal-Bezeichnung
             record_merge_mode: Zeiten eines Tages zusammenführen
             password_hint: Feld leer lassen um kein Passwort festzulegen
             table_options: Detailtabelle - Optionen
@@ -20,6 +21,7 @@ shared_project_timesheets:
             date_range_invalid: Das Startdatum darf nicht nach dem Enddatum liegen
             date_range_required: Gesperrte Datumsbereiche benötigen Start- und Enddatum
         table:
+            label: Portal-Bezeichnung
             record_merge_mode: Zeiten zusammenführen
             entry_user_visible: Benutzer sichtbar
             entry_rate_visible: Kosten sichtbar

@@ -75,7 +75,7 @@
         </div>
 
         {% else %}<form method="get" class="d-flex gap-2"><input type="date" name="from" value="{{ range.startDate.format('Y-m-d') }}" {% if portal.dateRangeFrozen %}disabled{% endif %}><input type="date" name="to" value="{{ range.endDate.format('Y-m-d') }}" {% if portal.dateRangeFrozen %}disabled{% endif %}>{% if not portal.dateRangeFrozen %}<button class="btn btn-default">Apply</button>{% endif %}</form>{% endif %}
-        <span class="ps-2">{{ customer.name }}</span>
+        <span class="ps-2">{% include '@CustomerPortal/_portal_label.html.twig' with {portal: portal} only %}</span>
     </h2>
 
     {% if show_month_stats %}

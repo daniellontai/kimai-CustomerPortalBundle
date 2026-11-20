@@ -5,8 +5,12 @@
 {% block datatable_row_attr %} class="modal-ajax-form open-edit" data-href="{{ url('update_shared_project_timesheets', {sharedProject: entry.id, shareKey: entry.shareKey}) }}"{% endblock %}
 
 {% block datatable_column_value %}
-    {% if column == 'name' %}
-        {{ entry.project.name ?? entry.customer.name }}
+    {% if column == 'label' %}
+        {% set dateRange = null %}
+        {% if entry.startDate is not null and entry.endDate is not null %}
+            {% set dateRange = entry.startDate|date_short ~ ' – ' ~ entry.endDate|date_short %}
+        {% endif %}
+        {{ entry.getDisplayLabel(dateRange) }}
     {% elseif column == 'type' %}
         <i class="{% if entry.getCustomer() != null %}{{ 'customer'|icon(false) }}{% else %}{{ 'project'|icon(false) }}{% endif %}" title="{{ entry.getType() | trans }}"></i>
     {% elseif column == 'url' %}

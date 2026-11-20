@@ -3,6 +3,7 @@ shared_project_timesheets:
 
     manage:
         form:
+            label: Portal label
             record_merge_mode: Merge records of one day
             password_hint: Leave empty to set no password
             table_options: Timesheet table options
@@ -20,6 +21,7 @@ shared_project_timesheets:
             date_range_invalid: Start date must not be after end date
             date_range_required: Frozen date ranges require start and end dates
         table:
+            label: Portal label
             record_merge_mode: Merge records
             entry_user_visible: Entry user visible
             entry_rate_visible: Entry rate visible

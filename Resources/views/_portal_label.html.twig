@@ -1,0 +1,5 @@
+{% set dateRange = null %}
+{% if portal.startDate is not null and portal.endDate is not null %}
+    {% set dateRange = portal.startDate|date_short ~ ' – ' ~ portal.endDate|date_short %}
+{% endif %}
+{{ portal.getDisplayLabel(dateRange) }}
