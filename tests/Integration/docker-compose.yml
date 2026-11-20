@@ -51,6 +51,9 @@ services:
       PORTAL_BATCH_A_KEY: batch-a
       PORTAL_BATCH_B_KEY: batch-b
       PORTAL_EDITABLE_KEY: editable
+      PORTAL_CUSTOMER_EDITABLE_KEY: customer-editable
+      PORTAL_PROTECTED_KEY: protected-customer
+      PORTAL_OUTSIDE_PROJECT_ID: 2
     entrypoint: ["php", "/tests/verify-portal-ranges.php"]
   seed:
     image: customer-portal-range-test-kimai

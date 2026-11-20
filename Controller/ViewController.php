@@ -70,17 +70,17 @@ class ViewController extends AbstractController
             $givenPassword = (string) $givenPassword;
         }
 
+        if (!$this->viewService->hasAccess($sharedPortal, $givenPassword, $request)) {
+            return $this->render('@CustomerPortal/view/auth.html.twig', [
+                'invalidPassword' => $request->isMethod('POST') && $givenPassword !== null,
+            ]);
+        }
+
         if ($project->getCustomer() !== $sharedPortal->getCustomer()) {
             throw $this->createAccessDeniedException('Requested project does not match customer');
         }
         if (!\in_array($project, $this->sharedProjectTimesheetRepository->getProjects($sharedPortal), true)) {
             throw $this->createAccessDeniedException('Requested project is not visible in this portal');
-        }
-
-        if (!$this->viewService->hasAccess($sharedPortal, $givenPassword, $request)) {
-            return $this->render('@CustomerPortal/view/auth.html.twig', [
-                'invalidPassword' => $request->isMethod('POST') && $givenPassword !== null,
-            ]);
         }
 
         return $this->renderProjectView($sharedPortal, $project, $request);
@@ -148,6 +148,7 @@ class ViewController extends AbstractController
             'statsPerDay' => $statsPerDay,
             'detailsMode' => $detailsMode,
             'stats' => $stats,
+            'projects' => $projects,
             'projectStats' => $projectStats,
         ]);
     }

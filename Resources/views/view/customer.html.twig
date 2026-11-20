@@ -217,21 +217,23 @@
             <h3 class="card-title">{{ 'projects'|trans }}</h3>
         </div>
         <div class="card-body{% if projectStats is not empty %} p-0{% endif %}">
-            {% if projectStats is empty %}
+            {% if range.legacyMonth and projectStats is empty %}
+                {{ nothing_found() }}
+            {% elseif not range.legacyMonth and projects is empty %}
                 {{ nothing_found() }}
             {% else %}
                 <table class="table table-hovertable-vcenter table-hover dataTable">
                     <thead>
                         <tr>
                             <th>{{ 'name'|trans }}</th>
-                            {% if (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
+                            {% if range.legacyMonth and (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
                                 <th></th>
                             {% endif %}
                             <th class="w-min"></th>
                         </tr>
                     </thead>
-                    {% for stats in projectStats %}
-                        {% set project = stats.getProject() %}
+                    {% for item in range.legacyMonth ? projectStats : projects %}
+                        {% set project = range.legacyMonth ? item.getProject() : item %}
                         {%
                             set project_url = url('customer_portal_project', {
                                 'shareKey': portal.shareKey,
@@ -242,13 +244,13 @@
                         %}
                         <tr class="alternative-link" data-href="{{ project_url }}">
                             <td>{{ project.name }}</td>
-                            {% if (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
+                            {% if range.legacyMonth and (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
                                 <td>
-                                    {% if stats.hasBudget() and portal.isBudgetStatsVisible() %}
-                                        {{ progress.progressbar_budget(stats, currency) }}
+                                    {% if item.hasBudget() and portal.isBudgetStatsVisible() %}
+                                        {{ progress.progressbar_budget(item, currency) }}
                                     {% endif %}
-                                    {% if stats.hasTimeBudget() and portal.isTimeBudgetStatsVisible() %}
-                                        {{ progress.progressbar_timebudget(stats) }}
+                                    {% if item.hasTimeBudget() and portal.isTimeBudgetStatsVisible() %}
+                                        {{ progress.progressbar_timebudget(item) }}
                                     {% endif %}
                                 </td>
                             {% endif %}

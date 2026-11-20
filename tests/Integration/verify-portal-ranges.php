@@ -69,6 +69,8 @@ $baseUrl = rtrim(environment('KIMAI_URL'), '/') . '/en';
 $batchA = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_BATCH_A_KEY');
 $batchB = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_BATCH_B_KEY');
 $editable = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_EDITABLE_KEY');
+$customerEditable = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_CUSTOMER_EDITABLE_KEY');
+$protected = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_PROTECTED_KEY');
 
 $batchAResponse = get($batchA);
 expectContains('A first boundary', $batchAResponse);
@@ -97,5 +99,14 @@ expectNotContains('A first boundary', $editableResponse);
 
 $editableBoundaryResponse = get($editable . '?from=2026-08-11&to=2026-10-10');
 expectContains('value="2026-10-10"', $editableBoundaryResponse);
+
+$customerEditableResponse = get($customerEditable . '?from=2026-08-12&to=2026-10-09');
+expectContains('Range fixture project', $customerEditableResponse);
+expectContains('customer-portal/customer-editable/p/', $customerEditableResponse);
+expectContains('from=2026-08-12', html_entity_decode($customerEditableResponse));
+expectContains('to=2026-10-09', html_entity_decode($customerEditableResponse));
+
+$protectedProjectResponse = get($protected . '/p/' . environment('PORTAL_OUTSIDE_PROJECT_ID'));
+expectContains('name="spt-password"', $protectedProjectResponse);
 
 fwrite(STDOUT, "Customer Portal date-range acceptance checks passed\n");
