@@ -10,6 +10,7 @@
 namespace KimaiPlugin\CustomerPortalBundle\Form;
 
 use App\Form\Type\CustomerType;
+use App\Form\Type\DatePickerType;
 use App\Form\Type\ProjectType;
 use App\Form\Type\YesNoType;
 use KimaiPlugin\CustomerPortalBundle\Entity\SharedProjectTimesheet;
@@ -56,6 +57,9 @@ class SharedProjectFormType extends AbstractType
                 'mapped' => false,
                 'help' => 'shared_project_timesheets.manage.form.password_hint',
             ])
+            ->add('startDate', DatePickerType::class, ['label' => 'shared_project_timesheets.manage.form.start_date', 'required' => false, 'html5' => false, 'input' => 'datetime_immutable'])
+            ->add('endDate', DatePickerType::class, ['label' => 'shared_project_timesheets.manage.form.end_date', 'required' => false, 'html5' => false, 'input' => 'datetime_immutable'])
+            ->add('dateRangeFrozen', YesNoType::class, ['label' => 'shared_project_timesheets.manage.form.freeze_date_range', 'required' => false])
             ->add(
                 $builder
                     ->create('tableOptions', FormType::class, [

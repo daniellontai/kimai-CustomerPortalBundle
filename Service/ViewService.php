@@ -17,6 +17,7 @@ use DateInterval;
 use DateTime;
 use KimaiPlugin\CustomerPortalBundle\Entity\SharedProjectTimesheet;
 use KimaiPlugin\CustomerPortalBundle\Model\ChartStat;
+use KimaiPlugin\CustomerPortalBundle\Model\PortalDateRange;
 use KimaiPlugin\CustomerPortalBundle\Model\RecordMergeMode;
 use KimaiPlugin\CustomerPortalBundle\Model\TimeRecord;
 use KimaiPlugin\CustomerPortalBundle\Repository\SharedProjectTimesheetRepository;
@@ -75,14 +76,19 @@ class ViewService
      *
      * @return TimeRecord[]
      */
-    public function getTimeRecords(SharedProjectTimesheet $sharedProject, int $year, int $month, ?Project $limitProject = null): array
+    public function getTimeRecords(SharedProjectTimesheet $sharedProject, int|PortalDateRange $year, int|Project|null $month = null, ?Project $limitProject = null): array
     {
-        $month = max(min($month, 12), 1);
-
-        $begin = new DateTime($year . '-' . $month . '-01 00:00:00');
-        $end = clone $begin;
-        $end->add(new DateInterval('P1M'));
-        $end->sub(new DateInterval('PT1S'));
+        if ($year instanceof PortalDateRange) {
+            $begin = DateTime::createFromImmutable($year->getStart());
+            $end = DateTime::createFromImmutable($year->getEndExclusive()->modify('-1 second'));
+            $limitProject = $month instanceof Project ? $month : $limitProject;
+        } else {
+            $month = max(min(\is_int($month) ? $month : 1, 12), 1);
+            $begin = new DateTime($year . '-' . $month . '-01 00:00:00');
+            $end = clone $begin;
+            $end->add(new DateInterval('P1M'));
+            $end->sub(new DateInterval('PT1S'));
+        }
 
         $query = new TimesheetQuery();
         $query->setBegin($begin);
@@ -217,6 +223,57 @@ class ViewService
         ksort($stats);
 
         return $stats;
+    }
+
+    /** @return array<string, ChartStat> */
+    public function getRangeStats(SharedProjectTimesheet $sharedProject, PortalDateRange $range, ?Project $limitProject = null, bool $monthly = true): array
+    {
+        $select = $monthly ? ['YEAR(t.date) AS year', 'MONTH(t.date) AS month'] : ['YEAR(t.date) AS year', 'MONTH(t.date) AS month', 'DAY(t.date) AS day'];
+        $select[] = 'SUM(t.duration) AS duration';
+        $select[] = 'SUM(t.rate) AS rate';
+        $builder = $this->timesheetRepository->createQueryBuilder('t')->select($select)
+            ->where('t.begin >= :start')->andWhere('t.begin < :end')
+            ->setParameter('start', $range->getStart())->setParameter('end', $range->getEndExclusive())
+            ->groupBy('year')->addGroupBy('month');
+        if (!$monthly) { $builder->addGroupBy('day'); }
+        $builder->orderBy('year', 'ASC')->addOrderBy('month', 'ASC');
+        if (!$monthly) { $builder->addOrderBy('day', 'ASC'); }
+        if ($limitProject !== null) {
+            $builder->andWhere('t.project = :project')->setParameter('project', $limitProject);
+        } elseif ($sharedProject->getProject() !== null) {
+            $builder->andWhere('t.project = :project')->setParameter('project', $sharedProject->getProject());
+        } else {
+            $projects = $this->sharedTimesheetRepository->getProjects($sharedProject);
+            if ($projects === []) { return []; }
+            $builder->andWhere('t.project IN (:projects)')->setParameter('projects', $projects);
+        }
+        $stats = [];
+        foreach ($builder->getQuery()->getArrayResult() as $row) {
+            $key = $monthly ? \sprintf('%04d-%02d', $row['year'], $row['month']) : \sprintf('%04d-%02d-%02d', $row['year'], $row['month'], $row['day']);
+            $stats[$key] = new ChartStat($row);
+        }
+
+        return $stats;
+    }
+
+    /** @return array<string, ChartStat> */
+    public function getRangeDetailStats(SharedProjectTimesheet $sharedProject, PortalDateRange $range, ?Project $limitProject = null): array
+    {
+        $days = $range->getStartDate()->diff($range->getEndDate())->days + 1;
+        if ($days <= 62) {
+            return $this->getRangeStats($sharedProject, $range, $limitProject, false);
+        }
+        if ($days > 366) {
+            return $this->getRangeStats($sharedProject, $range, $limitProject);
+        }
+        $weekly = [];
+        foreach ($this->getRangeStats($sharedProject, $range, $limitProject, false) as $day => $stat) {
+            $week = (new \DateTimeImmutable($day))->format('o-\\WW');
+            $current = $weekly[$week] ?? ['duration' => 0, 'rate' => 0.0];
+            $weekly[$week] = ['duration' => $current['duration'] + $stat->getDuration(), 'rate' => $current['rate'] + $stat->getRate()];
+        }
+
+        return array_map(static fn (array $row): ChartStat => new ChartStat($row), $weekly);
     }
 
     /**

@@ -26,13 +26,13 @@
 {% block page_classes %}page{% endblock %}
 
 {% block page_content %}
-{% set show_progress = (stats.hasBudget() and portal.isBudgetStatsVisible()) or (stats.hasTimeBudget() and portal.isTimeBudgetStatsVisible()) %}
+{% set show_progress = stats is not null and ((stats.hasBudget() and portal.isBudgetStatsVisible()) or (stats.hasTimeBudget() and portal.isTimeBudgetStatsVisible())) %}
 {% set show_month_stats = statsPerMonth is not null %}
 <div class="p-4">
 
     <h2 class="page-title mb-3">
 
-        <div class="btn-group pe-2">
+        {% if range.legacyMonth %}<div class="btn-group pe-2">
             <a class="btn btn-default{% if month <= 1 %} disabled{% endif %}"
                {% if month > 1 %}href="?year={{ year }}&month={{ month - 1 }}{% if detailsMode != 'table' %}&details={{ detailsMode }}{% endif %}"{% endif %}>
                 <i class="fa fa-caret-left"></i>
@@ -74,6 +74,7 @@
             </a>
         </div>
 
+        {% else %}<form method="get" class="d-flex gap-2"><input type="date" name="from" value="{{ range.startDate.format('Y-m-d') }}" {% if portal.dateRangeFrozen %}disabled{% endif %}><input type="date" name="to" value="{{ range.endDate.format('Y-m-d') }}" {% if portal.dateRangeFrozen %}disabled{% endif %}>{% if not portal.dateRangeFrozen %}<button class="btn btn-default">Apply</button>{% endif %}</form>{% endif %}
         <span class="ps-2">{{ customer.name }}</span>
     </h2>
 
@@ -130,10 +131,10 @@
             {% if monthlyChartVisible %}
                 <div class="card-actions">
                     <div class="btn-group">
-                        <a href="{{ url('customer_portal_view', {shareKey: portal.shareKey, year: year, month: month}) }}" class="btn btn-default btn-icon">
+                        <a href="{{ app.request.pathinfo }}?{% if range.legacyMonth %}year={{ year }}&month={{ month }}{% else %}from={{ range.startDate.format('Y-m-d') }}&to={{ range.endDate.format('Y-m-d') }}{% endif %}" class="btn btn-default btn-icon">
                             <i class="fas fa-table"></i>
                         </a>
-                        <a href="{{ url('customer_portal_view', {shareKey: portal.shareKey, year: year, month: month, details: 'chart'}) }}" class="btn btn-default btn-icon">
+                        <a href="{{ app.request.pathinfo }}?{% if range.legacyMonth %}year={{ year }}&month={{ month }}{% else %}from={{ range.startDate.format('Y-m-d') }}&to={{ range.endDate.format('Y-m-d') }}{% endif %}&details=chart" class="btn btn-default btn-icon">
                             <i class="fas fa-chart-bar"></i>
                         </a>
                     </div>
@@ -216,36 +217,40 @@
             <h3 class="card-title">{{ 'projects'|trans }}</h3>
         </div>
         <div class="card-body{% if projectStats is not empty %} p-0{% endif %}">
-            {% if projectStats is empty %}
+            {% if range.legacyMonth and projectStats is empty %}
+                {{ nothing_found() }}
+            {% elseif not range.legacyMonth and projects is empty %}
                 {{ nothing_found() }}
             {% else %}
                 <table class="table table-hovertable-vcenter table-hover dataTable">
                     <thead>
                         <tr>
                             <th>{{ 'name'|trans }}</th>
-                            {% if (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
+                            {% if range.legacyMonth and (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
                                 <th></th>
                             {% endif %}
                             <th class="w-min"></th>
                         </tr>
                     </thead>
-                    {% for stats in projectStats %}
-                        {% set project = stats.getProject() %}
+                    {% for item in range.legacyMonth ? projectStats : projects %}
+                        {% set project = range.legacyMonth ? item.getProject() : item %}
                         {%
                             set project_url = url('customer_portal_project', {
                                 'shareKey': portal.shareKey,
                                 'project': project.getId(),
+                                'from': range.legacyMonth ? null : range.startDate.format('Y-m-d'),
+                                'to': range.legacyMonth ? null : range.endDate.format('Y-m-d'),
                             })
                         %}
                         <tr class="alternative-link" data-href="{{ project_url }}">
                             <td>{{ project.name }}</td>
-                            {% if (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
+                            {% if range.legacyMonth and (portal.isBudgetStatsVisible() or portal.isTimeBudgetStatsVisible()) %}
                                 <td>
-                                    {% if stats.hasBudget() and portal.isBudgetStatsVisible() %}
-                                        {{ progress.progressbar_budget(stats, currency) }}
+                                    {% if item.hasBudget() and portal.isBudgetStatsVisible() %}
+                                        {{ progress.progressbar_budget(item, currency) }}
                                     {% endif %}
-                                    {% if stats.hasTimeBudget() and portal.isTimeBudgetStatsVisible() %}
-                                        {{ progress.progressbar_timebudget(stats) }}
+                                    {% if item.hasTimeBudget() and portal.isTimeBudgetStatsVisible() %}
+                                        {{ progress.progressbar_timebudget(item) }}
                                     {% endif %}
                                 </td>
                             {% endif %}

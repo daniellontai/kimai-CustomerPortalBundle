@@ -1,0 +1,73 @@
+services:
+  database:
+    image: mysql:8.0
+    tmpfs:
+      - /var/lib/mysql
+    environment:
+      MYSQL_DATABASE: kimai
+      MYSQL_USER: kimai
+      MYSQL_PASSWORD: kimai
+      MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -ukimai -pkimai --silent"]
+      interval: 5s
+      timeout: 5s
+      start_period: 90s
+      retries: 30
+  kimai:
+    build:
+      context: ../..
+      dockerfile: tests/Integration/Dockerfile
+      args:
+        KIMAI_IMAGE: kimai/kimai2@sha256:7ccc9597309b9f76ded0a3cf168b5e137167fec6c8aa6a588194dcf6ce26ec2f
+    environment:
+      APP_ENV: prod
+      APP_SECRET: integration-test-secret-not-for-production
+      TRUSTED_HOSTS: '^(kimai\.test|localhost|127\.0\.0\.1)$'
+      ADMINMAIL: admin@kimai.test
+      ADMINPASS: integration-test-password
+      DATABASE_URL: mysql://kimai:kimai@database/kimai?charset=utf8mb4&serverVersion=8.0.36
+    depends_on:
+      - database
+    volumes:
+      - kimai-cache:/opt/kimai/var/cache
+    ports:
+      - "127.0.0.1:8001:8001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -H 'Host: kimai.test' http://127.0.0.1:8001/ >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      start_period: 90s
+      retries: 60
+  verifier:
+    image: kimai/kimai2@sha256:7ccc9597309b9f76ded0a3cf168b5e137167fec6c8aa6a588194dcf6ce26ec2f
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    volumes:
+      - .:/tests:ro
+    environment:
+      KIMAI_URL: http://kimai:8001
+      PORTAL_BATCH_A_KEY: batch-a
+      PORTAL_BATCH_B_KEY: batch-b
+      PORTAL_EDITABLE_KEY: editable
+      PORTAL_CUSTOMER_EDITABLE_KEY: customer-editable
+      PORTAL_PROTECTED_KEY: protected-customer
+      PORTAL_OUTSIDE_PROJECT_ID: 2
+    entrypoint: ["php", "/tests/verify-portal-ranges.php"]
+  seed:
+    image: customer-portal-range-test-kimai
+    depends_on:
+      kimai:
+        condition: service_healthy
+    environment:
+      APP_ENV: prod
+      APP_SECRET: integration-test-secret-not-for-production
+      TRUSTED_HOSTS: '^(kimai\.test|localhost|127\.0\.0\.1)$'
+      DATABASE_URL: mysql://kimai:kimai@database/kimai?charset=utf8mb4&serverVersion=8.0.36
+    volumes:
+      - kimai-cache:/opt/kimai/var/cache
+    entrypoint: ["sh", "-c", "php -d memory_limit=512M /opt/kimai/bin/console kimai:bundle:customer-portal:install && php -d memory_limit=512M /opt/kimai/bin/console kimai:reload && php -d memory_limit=512M /fixtures/seed.php"]
+
+volumes:
+  kimai-cache:

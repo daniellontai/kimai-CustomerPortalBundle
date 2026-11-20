@@ -9,6 +9,20 @@ https://www.kimai.org/store/customer-portal.html
 
 All changes and compatible versions can be found in the [CHANGELOG](CHANGELOG.md).
 
+## Upgrade
+
+Back up the Kimai database before deploying an updated bundle. After replacing
+the plugin directory, run the plugin migration inside the Kimai PHP container:
+
+```bash
+docker compose exec kimai /opt/kimai/bin/console kimai:bundle:customer-portal:install
+docker compose exec kimai /opt/kimai/bin/console kimai:reload --env=prod
+```
+
+Existing portals keep their month/year navigation until an administrator sets
+a start or end date. Frozen ranges require both dates and cannot be changed by
+editing portal URLs.
+
 ## Why this fork?
 
 - The original author has abandoned the plugin and is not responding

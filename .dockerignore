@@ -1,0 +1,6 @@
+.git
+.worktrees
+.superpowers
+vendor
+composer.lock
+.phpunit.result.cache

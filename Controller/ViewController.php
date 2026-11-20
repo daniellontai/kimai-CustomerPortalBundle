@@ -16,6 +16,7 @@ use App\Entity\Project;
 use App\Project\ProjectStatisticService;
 use KimaiPlugin\CustomerPortalBundle\Entity\SharedProjectTimesheet;
 use KimaiPlugin\CustomerPortalBundle\Repository\SharedProjectTimesheetRepository;
+use KimaiPlugin\CustomerPortalBundle\Service\PortalDateRangeResolver;
 use KimaiPlugin\CustomerPortalBundle\Service\ViewService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +29,7 @@ class ViewController extends AbstractController
         private readonly ProjectStatisticService $projectStatisticService,
         private readonly CustomerStatisticService $customerStatisticsService,
         private readonly ViewService $viewService,
+        private readonly PortalDateRangeResolver $dateRangeResolver,
         private readonly SharedProjectTimesheetRepository $sharedProjectTimesheetRepository
     ) {
     }
@@ -68,14 +70,17 @@ class ViewController extends AbstractController
             $givenPassword = (string) $givenPassword;
         }
 
-        if ($project->getCustomer() !== $sharedPortal->getCustomer()) {
-            throw $this->createAccessDeniedException('Requested project does not match customer');
-        }
-
         if (!$this->viewService->hasAccess($sharedPortal, $givenPassword, $request)) {
             return $this->render('@CustomerPortal/view/auth.html.twig', [
                 'invalidPassword' => $request->isMethod('POST') && $givenPassword !== null,
             ]);
+        }
+
+        if ($project->getCustomer() !== $sharedPortal->getCustomer()) {
+            throw $this->createAccessDeniedException('Requested project does not match customer');
+        }
+        if (!\in_array($project, $this->sharedProjectTimesheetRepository->getProjects($sharedPortal), true)) {
+            throw $this->createAccessDeniedException('Requested project is not visible in this portal');
         }
 
         return $this->renderProjectView($sharedPortal, $project, $request);
@@ -100,9 +105,11 @@ class ViewController extends AbstractController
         $year = (int) $request->query->get('year', date('Y'));
         $month = (int) $request->query->get('month', date('m'));
         $detailsMode = $request->query->get('details', 'table');
+        $timezone = $customer->getTimezone() ?? date_default_timezone_get();
 
         // Get time records.
-        $timeRecords = $this->viewService->getTimeRecords($sharedPortal, $year, $month);
+        $range = $this->dateRangeResolver->resolve($sharedPortal, $request, $timezone);
+        $timeRecords = $this->viewService->getTimeRecords($sharedPortal, $range);
 
         // Calculate summary.
         $rateSum = 0;
@@ -116,16 +123,15 @@ class ViewController extends AbstractController
         $annualChartVisible = $sharedPortal->isAnnualChartVisible();
         $monthlyChartVisible = $sharedPortal->isMonthlyChartVisible();
 
-        $statsPerMonth = $annualChartVisible ? $this->viewService->getAnnualStats($sharedPortal, $year) : null;
+        $statsPerMonth = $annualChartVisible ? ($range->isLegacyMonth() ? $this->viewService->getAnnualStats($sharedPortal, $year) : $this->viewService->getRangeStats($sharedPortal, $range)) : null;
         $statsPerDay = ($monthlyChartVisible && $detailsMode === 'chart')
-            ? $this->viewService->getMonthlyStats($sharedPortal, $year, $month) : null;
+            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedPortal, $year, $month) : $this->viewService->getRangeDetailStats($sharedPortal, $range)) : null;
 
         // we cannot call $this->getDateTimeFactory() as it throws a AccessDeniedException for anonymous users
-        $timezone = $customer->getTimezone() ?? date_default_timezone_get();
         $date = new \DateTimeImmutable('now', new \DateTimeZone($timezone));
-        $stats = $this->customerStatisticsService->getBudgetStatisticModel($customer, $date);
+        $stats = $range->isLegacyMonth() ? $this->customerStatisticsService->getBudgetStatisticModel($customer, $date) : null;
         $projects = $this->sharedProjectTimesheetRepository->getProjects($sharedPortal);
-        $projectStats = $this->projectStatisticService->getBudgetStatisticModelForProjects($projects, $date);
+        $projectStats = $range->isLegacyMonth() ? $this->projectStatisticService->getBudgetStatisticModelForProjects($projects, $date) : [];
 
         return $this->render('@CustomerPortal/view/customer.html.twig', [
             'portal' => $sharedPortal,
@@ -135,12 +141,14 @@ class ViewController extends AbstractController
             'durationSum' => $durationSum,
             'year' => $year,
             'month' => $month,
+            'range' => $range,
             'currency' => $customer->getCurrency(),
             'statsPerMonth' => $statsPerMonth,
             'monthlyChartVisible' => $monthlyChartVisible,
             'statsPerDay' => $statsPerDay,
             'detailsMode' => $detailsMode,
             'stats' => $stats,
+            'projects' => $projects,
             'projectStats' => $projectStats,
         ]);
     }
@@ -150,7 +158,9 @@ class ViewController extends AbstractController
         $year = (int) $request->query->get('year', date('Y'));
         $month = (int) $request->query->get('month', date('m'));
         $detailsMode = $request->query->get('details', 'table');
-        $timeRecords = $this->viewService->getTimeRecords($sharedProject, $year, $month, $project);
+        $timezone = $project->getCustomer()?->getTimezone() ?? date_default_timezone_get();
+        $range = $this->dateRangeResolver->resolve($sharedProject, $request, $timezone);
+        $timeRecords = $this->viewService->getTimeRecords($sharedProject, $range, $project);
 
         // Calculate summary.
         $rateSum = 0;
@@ -166,15 +176,14 @@ class ViewController extends AbstractController
         // Prepare stats for charts.
         $annualChartVisible = $sharedProject->isAnnualChartVisible();
         $monthlyChartVisible = $sharedProject->isMonthlyChartVisible();
-        $statsPerMonth = $annualChartVisible ? $this->viewService->getAnnualStats($sharedProject, $year, $project) : null;
+        $statsPerMonth = $annualChartVisible ? ($range->isLegacyMonth() ? $this->viewService->getAnnualStats($sharedProject, $year, $project) : $this->viewService->getRangeStats($sharedProject, $range, $project)) : null;
         $statsPerDay = ($monthlyChartVisible && $detailsMode === 'chart')
-            ? $this->viewService->getMonthlyStats($sharedProject, $year, $month, $project) : null;
+            ? ($range->isLegacyMonth() ? $this->viewService->getMonthlyStats($sharedProject, $year, $month, $project) : $this->viewService->getRangeDetailStats($sharedProject, $range, $project)) : null;
 
         // we cannot call $this->getDateTimeFactory() as it throws a AccessDeniedException for anonymous users
-        $timezone = $project->getCustomer()?->getTimezone() ?? date_default_timezone_get();
         $date = new \DateTimeImmutable('now', new \DateTimeZone($timezone));
 
-        $stats = $this->projectStatisticService->getBudgetStatisticModel($project, $date);
+        $stats = $range->isLegacyMonth() ? $this->projectStatisticService->getBudgetStatisticModel($project, $date) : null;
 
         return $this->render('@CustomerPortal/view/project.html.twig', [
             'portal' => $sharedProject,
@@ -183,6 +192,7 @@ class ViewController extends AbstractController
             'durationSum' => $durationSum,
             'year' => $year,
             'month' => $month,
+            'range' => $range,
             'currency' => $currency,
             'statsPerMonth' => $statsPerMonth,
             'monthlyChartVisible' => $monthlyChartVisible,

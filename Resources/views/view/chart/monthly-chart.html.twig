@@ -11,9 +11,7 @@
         type: 'bar',
         data: {
             labels: [
-                {% for i in 1..(statsPerDay | length) %}
-                '{{ (year ~ "-" ~ month ~ "-" ~ i) | date_short }}',
-                {% endfor %}
+                {% if range.legacyMonth %}{% for i in 1..(statsPerDay | length) %}'{{ (year ~ "-" ~ month ~ "-" ~ i) | date_short }}',{% endfor %}{% else %}{% for label, stat in statsPerDay %}'{{ label }}',{% endfor %}{% endif %}
             ],
             datasets: [{
                 label: '{{ 'duration'|trans }}',
