@@ -65,7 +65,7 @@ function expectSame(string $expected, string $actual, string $message): void
     }
 }
 
-$baseUrl = rtrim(environment('KIMAI_URL'), '/');
+$baseUrl = rtrim(environment('KIMAI_URL'), '/') . '/en';
 $batchA = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_BATCH_A_KEY');
 $batchB = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_BATCH_B_KEY');
 $editable = $baseUrl . '/auth/customer-portal/' . environment('PORTAL_EDITABLE_KEY');
@@ -94,5 +94,8 @@ $editableResponse = get($editable . '?from=2026-09-16&to=2026-10-09');
 expectContains('B first boundary', $editableResponse);
 expectContains('B last boundary', $editableResponse);
 expectNotContains('A first boundary', $editableResponse);
+
+$editableBoundaryResponse = get($editable . '?from=2026-08-11&to=2026-10-10');
+expectContains('value="2026-10-10"', $editableBoundaryResponse);
 
 fwrite(STDOUT, "Customer Portal date-range acceptance checks passed\n");
