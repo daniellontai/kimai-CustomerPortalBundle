@@ -20,6 +20,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
@@ -45,6 +46,10 @@ class SharedProjectFormType extends AbstractType
         }
 
         $builder
+            ->add('label', TextType::class, [
+                'label' => 'shared_project_timesheets.manage.form.label',
+                'required' => false,
+            ])
             ->add('recordMergeMode', ChoiceType::class, [
                 'label' => 'shared_project_timesheets.manage.form.record_merge_mode',
                 'required' => true,

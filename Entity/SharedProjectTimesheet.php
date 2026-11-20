@@ -49,6 +49,10 @@ class SharedProjectTimesheet
     #[Assert\Length(max: 255)]
     private ?string $password = null;
 
+    #[ORM\Column(name: 'label', type: 'string', length: 255, nullable: true)]
+    #[Assert\Length(max: 255)]
+    private ?string $label = null;
+
     #[ORM\Column(name: 'entry_user_visible', type: 'boolean', nullable: false, options: ['default' => false])]
     private bool $entryUserVisible = false;
 
@@ -128,6 +132,31 @@ class SharedProjectTimesheet
     public function setPassword(#[\SensitiveParameter] ?string $password): void
     {
         $this->password = $password;
+    }
+
+    public function getLabel(): ?string
+    {
+        return $this->label;
+    }
+
+    public function setLabel(?string $label): void
+    {
+        $this->label = $label;
+    }
+
+    public function getDisplayLabel(?string $dateRange = null): string
+    {
+        $label = trim($this->label ?? '');
+        if ($label !== '') {
+            return $label;
+        }
+
+        $label = $this->customer?->getName() ?? $this->project?->getName() ?? '';
+        if ($dateRange !== null && $this->startDate !== null && $this->endDate !== null) {
+            return $label . ' – ' . $dateRange;
+        }
+
+        return $label;
     }
 
     public function isEntryUserVisible(): bool
